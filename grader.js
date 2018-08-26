@@ -19,6 +19,7 @@ app.set("view engine", "html");
 app.engine('html', require('ejs').renderFile);
 
 var server_url = 'http://127.0.0.1:8080';
+var url_port = 8080
 var jwxt_id = ''; //学号
 var jwxt_password = ''; //教务系统密码
 
@@ -80,7 +81,7 @@ app.get('/sign_out', function (req, res) {
     res.clearCookie('user');
     jwxt_id = '';
     jwxt_password = '';
-    res.redirect(server_url);
+    setTimeout(function () {res.redirect(server_url);}, 3000);
 });
 
 app.post('/get_grades', urlencodedParser, function (req, res) {
@@ -105,7 +106,7 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
     });
 });
 
-var server = app.listen(8080, function () {
+var server = app.listen(url_port, function () {
     var host = server.address().address;
     var port = server.address().port;
     console.log("Successfully booted, url: http://%s:%s", host, port);
