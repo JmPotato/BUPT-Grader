@@ -41,19 +41,20 @@ var get_headers = {
     'Cookie': '',
 };
 
+var login = 0;
+
 app.all('*', function(req, res, next) {
     res.header("Access-Control-Allow-Origin", req.headers.origin);
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
-    res.header("Access-Control-Allow-Credentials",true);
+    res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
+    res.header("Access-Control-Allow-Credentials", true);
     next();
 });
 
 app.get('/', function (req, res) {
-    var login = 0;
-    function renderPage () {res.render('validate', {login, server_url});};
+    var message = req.param('message');
+    function renderPage () {res.render('validate', {message, login, server_url});};
     if (req.cookies.user) {
-        login = 1;
         jwxt_id = req.cookies.user.id;
         jwxt_password = req.cookies.user.password;
         request.get({url: 'http://jwxt.bupt.edu.cn/validateCodeAction.do?random=', encoding: null}, function (error, response, body) {
@@ -61,7 +62,6 @@ app.get('/', function (req, res) {
             get_headers.Cookie = response.headers["set-cookie"].toString().substring(0, 32);
         }).pipe(fs.createWriteStream(__dirname + '/public/validate_code.jpg'));
     } else {
-        login = 0;
         jwxt_id = '';
         jwxt_password = '';
     }
@@ -72,16 +72,21 @@ app.post('/sign_in', urlencodedParser, function (req, res) {
     res.clearCookie('user');
     var re_id = /^\d{10}$/;
     if (re_id.test(req.body.id) && req.body.password !== '') {
+        login = 1;
         res.cookie('user', {id: req.body.id,password: req.body.password},{maxAge:2678400000,path:'/',httpOnly:true});
+        res.redirect(server_url);
+    } else {
+        login = 0;
+        res.redirect(server_url + '?message=请输入正确的学号');
     }
-    res.redirect(server_url);
 });
 
 app.get('/sign_out', function (req, res) {
+    login = 0;
     res.clearCookie('user');
     jwxt_id = '';
     jwxt_password = '';
-    setTimeout(function () {res.redirect(server_url);}, 3000);
+    res.redirect(server_url);
 });
 
 app.post('/get_grades', urlencodedParser, function (req, res) {
@@ -104,6 +109,10 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
             });
         }
     });
+});
+
+app.get('/logout.do', function (req, res) {
+    res.redirect(server_url + '?message=查询失败，请确认学号，密码以及验证码均输入正确');
 });
 
 var server = app.listen(url_port, function () {
