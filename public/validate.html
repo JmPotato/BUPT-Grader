@@ -10,6 +10,7 @@
     <% if (login) { %>
         <form class="form-signin" action="<% server_url %>/get_grades" method="POST">
             <h1 class="h3 mb-3 font-weight-normal">北邮教务成绩查询</h1>
+            <% if (message) { %><p class="message"><%=message%></p><% } %>
             <img src="./validate_code.jpg">
             <input type="text" name="validate_code">
             <input class="btn btn-primary" type="submit" value="查询"><br>
@@ -20,6 +21,7 @@
     <% } else { %>
         <form class="form-signin" action="<% server_url %>/sign_in" method="POST">
             <h1 class="h3 mb-3 font-weight-normal">北邮教务成绩查询</h1>
+            <% if (message) { %><p class="message"><%=message%></p><% } %>
             <label for="jwxt_id" class="sr-only">教务系统学号</label>
             <input id="jwxt_id" type="text" name="id" class="form-control" placeholder="教务系统学号" required autofocus>
             <label for="jwxt_password" class="sr-only">教务系统密码</label>

@@ -2,7 +2,9 @@ html,
 body {
   height: 100%;
 }
-
+.message {
+  color: #FF0000;
+}
 body {
   display: -ms-flexbox;
   display: flex;
