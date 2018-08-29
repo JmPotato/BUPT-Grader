@@ -2,7 +2,7 @@
 一键查询北邮教务成绩
 
 # 使用说明
-访问 http://grader.ipotato.me 即可使用。
+访问 https://grader.ipotato.me 即可使用。
 
 # 即将加入的功能
 * 上线服务器✓
