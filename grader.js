@@ -18,7 +18,7 @@ app.set('views', __dirname + '/public');
 app.set("view engine", "html");
 app.engine('html', require('ejs').renderFile);
 
-var server_url = 'http://127.0.0.1:8080';
+var server_url = 'http://localhost:8080';
 var url_port = 8080
 var jwxt_id = ''; //学号
 var jwxt_password = ''; //教务系统密码
@@ -52,21 +52,29 @@ app.all('*', function(req, res, next) {
 });
 
 app.get('/', function (req, res) {
+    var random_id = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
+    var validate_code_img = __dirname + '/public/validate_code_' + random_id + '.jpg';
     var message = req.param('message');
-    function renderPage () {res.render('validate', {message, login, server_url});};
-    if (req.cookies.user) {
+    function deleteImg () {
+        fs.unlinkSync(validate_code_img);
+    }
+    function renderPage () {
+        res.render('validate', {random_id, message, login, server_url});
+    };
+    if (req.cookies.user && login) {
         jwxt_id = req.cookies.user.id;
         jwxt_password = req.cookies.user.password;
         request.get({url: 'http://jwxt.bupt.edu.cn/validateCodeAction.do?random=', encoding: null}, function (error, response, body) {
             if (!error) {
                 post_headers.Cookie = response.headers["set-cookie"].toString().substring(0, 32);
                 get_headers.Cookie = response.headers["set-cookie"].toString().substring(0, 32);
+                setTimeout(deleteImg, 10000);
             } else {
                 res.clearCookie('user');
                 login = 0;
                 res.redirect(server_url + '?message=查询失败，当前无法访问教务系统');
             }
-        }).pipe(fs.createWriteStream(__dirname + '/public/validate_code.jpg'));
+        }).pipe(fs.createWriteStream(validate_code_img));
     } else {
         jwxt_id = '';
         jwxt_password = '';
