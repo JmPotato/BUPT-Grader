@@ -46,7 +46,7 @@ var login = 0;
 app.all('*', function(req, res, next) {
     res.header("Access-Control-Allow-Origin", req.headers.origin);
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
+    res.header("Access-Control-Allow-Methods", "POST,GET");
     res.header("Access-Control-Allow-Credentials", true);
     next();
 });
@@ -58,8 +58,14 @@ app.get('/', function (req, res) {
         jwxt_id = req.cookies.user.id;
         jwxt_password = req.cookies.user.password;
         request.get({url: 'http://jwxt.bupt.edu.cn/validateCodeAction.do?random=', encoding: null}, function (error, response, body) {
-            post_headers.Cookie = response.headers["set-cookie"].toString().substring(0, 32);
-            get_headers.Cookie = response.headers["set-cookie"].toString().substring(0, 32);
+            if (!error) {
+                post_headers.Cookie = response.headers["set-cookie"].toString().substring(0, 32);
+                get_headers.Cookie = response.headers["set-cookie"].toString().substring(0, 32);
+            } else {
+                res.clearCookie('user');
+                login = 0;
+                res.redirect(server_url + '?message=查询失败，当前无法访问教务系统');
+            }
         }).pipe(fs.createWriteStream(__dirname + '/public/validate_code.jpg'));
     } else {
         jwxt_id = '';
@@ -86,6 +92,10 @@ app.get('/sign_out', function (req, res) {
     res.clearCookie('user');
     jwxt_id = '';
     jwxt_password = '';
+    res.redirect(server_url);
+});
+
+app.get('/get_grades', function (req, res) {
     res.redirect(server_url);
 });
 
