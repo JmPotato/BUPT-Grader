@@ -41,8 +41,6 @@ var get_headers = {
     'Cookie': '',
 };
 
-var login = 0;
-
 app.all('*', function(req, res, next) {
     res.header("Access-Control-Allow-Origin", req.headers.origin);
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -52,6 +50,7 @@ app.all('*', function(req, res, next) {
 });
 
 app.get('/', function (req, res) {
+    var login = 0;
     var random_id = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
     var validate_code_img = __dirname + '/public/validate_code_' + random_id + '.jpg';
     var message = req.param('message');
@@ -61,7 +60,8 @@ app.get('/', function (req, res) {
     function renderPage () {
         res.render('validate', {random_id, message, login, server_url});
     };
-    if (req.cookies.user && login) {
+    if (req.cookies.user) {
+        login = 1;
         jwxt_id = req.cookies.user.id;
         jwxt_password = req.cookies.user.password;
         request.get({url: 'http://jwxt.bupt.edu.cn/validateCodeAction.do?random=', encoding: null}, function (error, response, body) {
@@ -71,11 +71,11 @@ app.get('/', function (req, res) {
                 setTimeout(deleteImg, 10000);
             } else {
                 res.clearCookie('user');
-                login = 0;
                 res.redirect(server_url + '?message=查询失败，当前无法访问教务系统');
             }
         }).pipe(fs.createWriteStream(validate_code_img));
     } else {
+        login = 0;
         jwxt_id = '';
         jwxt_password = '';
     }
@@ -86,17 +86,14 @@ app.post('/sign_in', urlencodedParser, function (req, res) {
     res.clearCookie('user');
     var re_id = /^\d{10}$/;
     if (re_id.test(req.body.id) && req.body.password !== '') {
-        login = 1;
         res.cookie('user', {id: req.body.id,password: req.body.password},{maxAge:2678400000,path:'/',httpOnly:true});
         res.redirect(server_url);
     } else {
-        login = 0;
         res.redirect(server_url + '?message=请输入正确的学号');
     }
 });
 
 app.get('/sign_out', function (req, res) {
-    login = 0;
     res.clearCookie('user');
     jwxt_id = '';
     jwxt_password = '';
