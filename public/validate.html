@@ -11,12 +11,19 @@
         <form class="form-signin" action="<% server_url %>/get_grades" method="POST">
             <h1 class="h3 mb-3 font-weight-normal">北邮教务成绩查询</h1>
             <% if (message) { %><p class="message"><%=message%></p><% } %>
-            <img src="./validate_code.jpg">
+            <img class="validate" src="./validate_code_<%=random_id%>.jpg">
             <input type="text" name="validate_code">
-            <input class="btn btn-primary" type="submit" value="查询"><br>
-            <input style="margin-top:10px;" type="radio" value="current" name="method" checked="checked"> 本学期成绩 
-            <input style="margin-top:10px;" type="radio" value="all" name="method"> 所有成绩 <br>
+            <input class="btn btn-primary inquire" type="submit" value="查询"><br>
+            <input type="radio" value="current" name="method" checked="checked"> 本学期成绩 
+            <input type="radio" value="all" name="method"> 所有成绩 <br>
             <input onclick="location.href='<% server_url %>/sign_out'" class="btn btn-primary" value="注销" style="margin-top:10px;">
+            <p class="mt-5 mb-3 text-muted">
+                <img class="icon" src="./github-alt-brands.svg" width="15">
+                <a class="text-muted" href="https://github.com/JmPotato/BUPT-Grader">GitHub</a>
+                &nbsp;•&nbsp;&nbsp;
+                <img class="icon" src="./address-book-solid.svg" width="15">
+                <a class="text-muted" href="https://ipotato.me">JmPotato</a>
+            </p>
         </form>
     <% } else { %>
         <form class="form-signin" action="<% server_url %>/sign_in" method="POST">
@@ -27,6 +34,13 @@
             <label for="jwxt_password" class="sr-only">教务系统密码</label>
             <input id="jwxt_id" type="password" name="password" class="form-control" placeholder="教务系统密码" required>
             <button class="btn btn-lg btn-primary btn-block" type="submit">登录</button>
+            <p class="mt-5 mb-3 text-muted">
+                <img class="icon" src="./github-alt-brands.svg" width="15">
+                <a class="text-muted" href="https://github.com/JmPotato/BUPT-Grader">GitHub</a>
+                &nbsp;•&nbsp;&nbsp;
+                <img class="icon" src="./address-book-solid.svg" width="15">
+                <a class="text-muted" href="https://ipotato.me">JmPotato</a>
+            </p>
         </form>
     <% } %>
 </body>
