@@ -1,8 +1,10 @@
 'use strict';
 
+var config = require('./config.js');
+var Encryption = require('./encryption.js');
+
 var fs = require('fs');
-var ejs = require('ejs')
-var path = require('path');
+var ejs = require('ejs');
 var express = require('express');
 var request = require('request');
 var iconv = require('iconv-lite');
@@ -18,26 +20,9 @@ app.set('views', __dirname + '/public');
 app.set("view engine", "html");
 app.engine('html', require('ejs').renderFile);
 
-var server_url = 'http://localhost:8080';
-var url_port = 8080
-
-var post_headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'zh-CN,zh;q=0.9',
-    'Accept-Encoding': 'gzip, deflate',
-    'content-type': 'application/x-www-form-urlencoded',
-    'Connection': 'keep-alive',
-    'Cookie': '',
-};
-var get_headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'zh-CN,zh;q=0.9',
-    'Accept-Encoding': 'gzip, deflate',
-    'Connection': 'keep-alive',
-    'Cookie': '',
-};
+var server_url = config.server_url;
+var server_port = config.server_port;
+var encryption = new Encryption(config.key);
 
 app.all('*', function(req, res, next) {
     res.header("Access-Control-Allow-Origin", req.headers.origin);
@@ -58,12 +43,13 @@ app.get('/', function (req, res) {
     function renderPage () {
         res.render('validate', {random_id, message, login, server_url});
     };
+    if (req.cookies.identity)
+        res.clearCookie('identity');
     if (req.cookies.user) {
         login = 1;
         request.get({url: 'http://jwxt.bupt.edu.cn/validateCodeAction.do?random=', encoding: null}, function (error, response, body) {
             if (!error) {
-                post_headers.Cookie = response.headers["set-cookie"].toString().substring(0, 32);
-                get_headers.Cookie = response.headers["set-cookie"].toString().substring(0, 32);
+                res.cookie('identity', encryption.encryptText(response.headers["set-cookie"].toString().substring(0, 32)),{maxAge:2678400000,path:'/',httpOnly:true});
                 setTimeout(deleteImg, 10000);
             } else {
                 res.clearCookie('user');
@@ -82,9 +68,10 @@ app.get('/sign_in', function (req, res) {
 
 app.post('/sign_in', urlencodedParser, function (req, res) {
     res.clearCookie('user');
+    res.clearCookie('identity');
     var re_id = /^\d{10}$/;
     if (re_id.test(req.body.id) && req.body.password !== '') {
-        res.cookie('user', {id: req.body.id,password: req.body.password},{maxAge:2678400000,path:'/',httpOnly:true});
+        res.cookie('user', {id: encryption.encryptText(req.body.id), password: encryption.encryptText(req.body.password)},{maxAge:2678400000,path:'/',httpOnly:true});
         res.redirect(server_url);
     } else {
         res.redirect(server_url + '?message=请输入正确的学号');
@@ -93,6 +80,7 @@ app.post('/sign_in', urlencodedParser, function (req, res) {
 
 app.get('/sign_out', function (req, res) {
     res.clearCookie('user');
+    res.clearCookie('identity');
     res.redirect(server_url);
 });
 
@@ -101,10 +89,27 @@ app.get('/get_grades', function (req, res) {
 });
 
 app.post('/get_grades', urlencodedParser, function (req, res) {
+    var post_headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+        'Accept-Encoding': 'gzip, deflate',
+        'content-type': 'application/x-www-form-urlencoded',
+        'Connection': 'keep-alive',
+        'Cookie': encryption.decryptText(req.cookies.identity),
+    };
+    var get_headers = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'zh-CN,zh;q=0.9',
+        'Accept-Encoding': 'gzip, deflate',
+        'Connection': 'keep-alive',
+        'Cookie': encryption.decryptText(req.cookies.identity),
+    };
     var form = {
         type: 'sso',
-        zjh: req.cookies.user.id,
-        mm: req.cookies.user.password,
+        zjh: encryption.decryptText(req.cookies.user.id),
+        mm: encryption.decryptText(req.cookies.user.password),
         v_yzm: req.body.validate_code,
     };
     request.post({url: 'http://jwxt.bupt.edu.cn/jwLoginAction.do', encoding: null, gzip: true, headers: post_headers, form: form}, function (error, response, body) {
@@ -126,7 +131,7 @@ app.get('/logout.do', function (req, res) {
     res.redirect(server_url + '?message=查询失败，请确认学号，密码以及验证码均输入正确');
 });
 
-var server = app.listen(url_port, function () {
+var server = app.listen(server_port, function () {
     var host = server.address().address;
     var port = server.address().port;
     console.log("Successfully booted, url: http://%s:%s", host, port);
