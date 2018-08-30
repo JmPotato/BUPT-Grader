@@ -20,8 +20,6 @@ app.engine('html', require('ejs').renderFile);
 
 var server_url = 'http://localhost:8080';
 var url_port = 8080
-var jwxt_id = ''; //学号
-var jwxt_password = ''; //教务系统密码
 
 var post_headers = {
     'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15',
@@ -62,8 +60,6 @@ app.get('/', function (req, res) {
     };
     if (req.cookies.user) {
         login = 1;
-        jwxt_id = req.cookies.user.id;
-        jwxt_password = req.cookies.user.password;
         request.get({url: 'http://jwxt.bupt.edu.cn/validateCodeAction.do?random=', encoding: null}, function (error, response, body) {
             if (!error) {
                 post_headers.Cookie = response.headers["set-cookie"].toString().substring(0, 32);
@@ -76,10 +72,12 @@ app.get('/', function (req, res) {
         }).pipe(fs.createWriteStream(validate_code_img));
     } else {
         login = 0;
-        jwxt_id = '';
-        jwxt_password = '';
     }
     setTimeout(renderPage, 3000);
+});
+
+app.get('/sign_in', function (req, res) {
+    res.redirect(server_url);
 });
 
 app.post('/sign_in', urlencodedParser, function (req, res) {
@@ -95,8 +93,6 @@ app.post('/sign_in', urlencodedParser, function (req, res) {
 
 app.get('/sign_out', function (req, res) {
     res.clearCookie('user');
-    jwxt_id = '';
-    jwxt_password = '';
     res.redirect(server_url);
 });
 
@@ -107,8 +103,8 @@ app.get('/get_grades', function (req, res) {
 app.post('/get_grades', urlencodedParser, function (req, res) {
     var form = {
         type: 'sso',
-        zjh: jwxt_id,
-        mm: jwxt_password,
+        zjh: req.cookies.user.id,
+        mm: req.cookies.user.password,
         v_yzm: req.body.validate_code,
     };
     request.post({url: 'http://jwxt.bupt.edu.cn/jwLoginAction.do', encoding: null, gzip: true, headers: post_headers, form: form}, function (error, response, body) {
