@@ -11,7 +11,7 @@
         <form class="form-signin" action="<% server_url %>/get_grades" method="POST">
             <h1 class="h3 mb-3 font-weight-normal">北邮教务成绩查询</h1>
             <% if (message) { %><p class="message"><%=message%></p><% } %>
-            <img onclick="location.href='<% server_url %>'" class="validate" src="./validate_code_<%=random_id%>.jpg">
+            <img onclick="location.href='<% server_url %>'" class="validate" src="./vc/validate_code_<%=random_id%>.jpg">
             <input type="text" name="validate_code">
             <input class="btn btn-primary inquire" type="submit" value="查询"><br>
             <input type="radio" value="current" name="method" checked="checked"> 本学期成绩 

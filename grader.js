@@ -13,6 +13,17 @@ var cookieParser = require('cookie-parser');
 
 var urlencodedParser = bodyParser.urlencoded({ extended: false })
 
+function deleteImg () {
+    fs.readdir(__dirname + '/public/vc/', function(err, files) {
+        if (err) {
+            console.error(err);
+        }
+        files.forEach(function(file) {
+            fs.unlinkSync(__dirname + '/public/vc/' + file);
+        });
+    });
+}
+
 var app = express();
 app.use(express.static(__dirname + '/public'));
 app.use(cookieParser());
@@ -33,16 +44,14 @@ app.all('*', function(req, res, next) {
 });
 
 app.get('/', function (req, res) {
-    var login = 0;
-    var random_id = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
-    var validate_code_img = __dirname + '/public/validate_code_' + random_id + '.jpg';
-    var message = req.param('message');
-    function deleteImg () {
-        fs.unlinkSync(validate_code_img);
-    }
+    deleteImg();
     function renderPage () {
         res.render('validate', {random_id, message, login, server_url});
     };
+    var login = 0;
+    var random_id = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
+    var validate_code_img = __dirname + '/public/vc/validate_code_' + random_id + '.jpg';
+    var message = req.param('message');
     if (req.cookies.identity)
         res.clearCookie('identity');
     if (req.cookies.user) {
@@ -50,7 +59,7 @@ app.get('/', function (req, res) {
         request.get({url: 'http://jwxt.bupt.edu.cn/validateCodeAction.do?random=', encoding: null}, function (error, response, body) {
             if (!error) {
                 res.cookie('identity', encryption.encryptText(response.headers["set-cookie"].toString().substring(0, 32)),{maxAge:2678400000,path:'/',httpOnly:true});
-                setTimeout(deleteImg, 10000);
+                //setTimeout(deleteImg, 10000);
             } else {
                 res.clearCookie('user');
                 res.redirect(server_url + '?message=查询失败，当前无法访问教务系统');
@@ -79,6 +88,7 @@ app.post('/sign_in', urlencodedParser, function (req, res) {
 });
 
 app.get('/sign_out', function (req, res) {
+    deleteImg();
     res.clearCookie('user');
     res.clearCookie('identity');
     res.redirect(server_url);
@@ -89,6 +99,7 @@ app.get('/get_grades', function (req, res) {
 });
 
 app.post('/get_grades', urlencodedParser, function (req, res) {
+    deleteImg();
     var post_headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
