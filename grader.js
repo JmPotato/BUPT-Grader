@@ -1,6 +1,7 @@
 'use strict';
 
 var config = require('./config.js');
+var Calculator = require('./calculator.js');
 var Encryption = require('./encryption.js');
 
 var fs = require('fs');
@@ -46,7 +47,7 @@ app.all('*', function(req, res, next) {
 app.get('/', function (req, res) {
     deleteImg();
     function renderPage () {
-        res.render('validate', {random_id, message, login, server_url});
+        res.render('home', {random_id, message, login, server_url});
     };
     var login = 0;
     var random_id = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
@@ -123,16 +124,21 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
         mm: encryption.decryptText(req.cookies.user.password),
         v_yzm: req.body.validate_code,
     };
+    var grades = '';
     request.post({url: 'http://jwxt.bupt.edu.cn/jwLoginAction.do', encoding: null, gzip: true, headers: post_headers, form: form}, function (error, response, body) {
         if (req.body.method === 'all') {
             request.get({url:'http://jwxt.bupt.edu.cn/gradeLnAllAction.do?type=ln&oper=sxinfo&lnsxdm=001', encoding: null, gzip: true, headers: get_headers}, function (error, r, body) {
-                var html = iconv.decode(body, 'gb2312');
-                res.send(html);
+                grades = iconv.decode(body, 'gb2312');
+                var calculator = new Calculator(grades, 'all');
+                var content = calculator.purifyTable();
+                res.render('grades', {server_url, content, type: 'all'});
             });
         } else if (req.body.method === 'current') {
             request.get({url:'http://jwxt.bupt.edu.cn/bxqcjcxAction.do', encoding: null, gzip: true, headers: get_headers}, function (error, r, body) {
-                var html = iconv.decode(body, 'gb2312');
-                res.send(html);
+                grades = iconv.decode(body, 'gb2312');
+                var calculator = new Calculator(grades, 'current');
+                var content = calculator.purifyTable();
+                res.render('grades', {server_url, content, type: 'current'});
             });
         }
     });

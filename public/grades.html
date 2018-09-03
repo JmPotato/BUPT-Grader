@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<% include header.html %>
+<body>
+    <div class="grades">
+        <% if (type === 'current') { %>
+            <h5><a href="<% server_url %>"><-</a>当前学期成绩</h5>
+        <% } %>
+        <% if (type === 'all') { %>
+            <h5><a href="<% server_url %>"><-</a>所有学期成绩</h5>
+        <% } %>
+        <%- content %>
+    </div>
+</body>
+</html>
