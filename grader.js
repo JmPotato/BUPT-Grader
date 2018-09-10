@@ -24,6 +24,7 @@ app.engine('html', require('ejs').renderFile);
 
 var server_url = config.server_url;
 var server_port = config.server_port;
+var utils = new Utils();
 var encryption = new Encryption(config.key);
 
 app.all('*', function(req, res, next) {
@@ -35,7 +36,7 @@ app.all('*', function(req, res, next) {
 });
 
 app.get('/', function (req, res) {
-    Utils.deleteImgs();
+    utils.deleteImgs();
     function renderPage () {
         res.render('home', {random_id, message, login, server_url});
     };
@@ -79,7 +80,7 @@ app.post('/sign_in', urlencodedParser, function (req, res) {
 });
 
 app.get('/sign_out', function (req, res) {
-    Utils.deleteImgs();
+    utils.deleteImgs();
     res.clearCookie('user');
     res.clearCookie('identity');
     res.redirect(server_url);
@@ -90,7 +91,7 @@ app.get('/get_grades', function (req, res) {
 });
 
 app.post('/get_grades', urlencodedParser, function (req, res) {
-    Utils.deleteImgs();
+    utils.deleteImgs();
     var post_headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
