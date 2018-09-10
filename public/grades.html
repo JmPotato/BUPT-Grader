@@ -8,7 +8,9 @@
         <% if (type === 'all') { %>
             <h5><a href="<% server_url %>"><-</a>所有学期成绩</h5>
         <% } %>
-        <%- content %>
+        <div class="table-container">
+            <%- content %>
+        </div>
     </div>
 </body>
 </html>
