@@ -11,15 +11,19 @@ function Calculator(grades, type) {
             return $("table.titleTop2").removeClass('titleTop2').addClass('table').attr('cellpadding', null).attr('width', null).attr('cellspacing', null).attr('border', null);
     };
     this.calculateGPA = function () {
-        var point_1 = /^[0-9]+(.[0-9]{1})?$/
-        var point_2 = /^.[0-9]{2}?$/
-        var mark = /^\d{2}$/
-        if (type === 'current') {
-            //return result;
-        }
-        if (type === 'all') {
-            //return result;
-        }
+        var grades_sum = 0;
+        var point_sum = 0;
+        if (type === 'all')
+            $('.table').last().remove();
+        $('tr.odd').each(function(i, elem) {
+            var grade = parseFloat($(this).children().eq(6).text().replace(/\s+/g,""));
+            var point = parseFloat($(this).children().eq(4).text().replace(/\s+/g,""));
+            if (!isNaN(grade) && !isNaN(point)) {
+                grades_sum += grade * point;
+                point_sum += point;
+            }
+        });
+        return grades_sum/point_sum;
     };
 };
 

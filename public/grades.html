@@ -4,9 +4,15 @@
     <div class="grades">
         <% if (type === 'current') { %>
             <h5><a href="<% server_url %>"><-</a>当前学期成绩</h5>
+            <div>
+                <h6>本学期平均分：<%=gpa %>（含任选课）</h6>
+            </div>
         <% } %>
         <% if (type === 'all') { %>
             <h5><a href="<% server_url %>"><-</a>所有学期成绩</h5>
+            <div>
+                <h6>总学期平均分：<%=gpa %>（不含任选课）</h6>
+            </div>
         <% } %>
         <div class="table-container">
             <%- content %>

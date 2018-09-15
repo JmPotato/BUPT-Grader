@@ -130,6 +130,9 @@ app.get('/get_grades', function (req, res) {
 
 app.post('/get_grades', urlencodedParser, function (req, res) {
     utils.deleteImgs();
+    if (!req.body.validate_code) {
+        res.redirect(server_url + '?message=请输入验证码');
+    }
     var post_headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
@@ -160,14 +163,16 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
                 grades = iconv.decode(body, 'gb2312');
                 var calculator = new Calculator(grades, 'all');
                 var content = calculator.purifyTable();
-                res.render('grades', {server_url, content, type: 'all'});
+                var gpa = calculator.calculateGPA();
+                res.render('grades', {server_url, gpa, content, type: 'all'});
             });
         } else if (req.body.method === 'current') {
             request.get({url:'http://jwxt.bupt.edu.cn/bxqcjcxAction.do', encoding: null, gzip: true, headers: get_headers}, function (error, r, body) {
                 grades = iconv.decode(body, 'gb2312');
                 var calculator = new Calculator(grades, 'current');
                 var content = calculator.purifyTable();
-                res.render('grades', {server_url, content, type: 'current'});
+                var gpa = calculator.calculateGPA();
+                res.render('grades', {server_url, gpa, content, type: 'current'});
             });
         }
     });
