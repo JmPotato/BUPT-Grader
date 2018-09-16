@@ -72,12 +72,16 @@ app.get('/', function (req, res) {
                             try {
                                 res.cookie('identity', encryption.encryptText(response.headers["set-cookie"].toString().substring(0, 32)),{maxAge:2678400000, path:'/', httpOnly:true});
                             } catch(err) {
-                                res.redirect(server_url);
+                                res.clearCookie('user');
+                                res.clearCookie('identity');
+                                res.clearCookie('ticket');
+                                res.redirect(server_url + '?message=访问教务系统错误，请重试');
                             }
                         } else {
                             res.clearCookie('user');
+                            res.clearCookie('identity');
                             res.clearCookie('ticket');
-                            res.redirect(server_url + '?message=查询失败，当前无法访问教务系统');
+                            res.redirect(server_url + '?message=访问教务系统错误，请重试');
                         }
                         res.render('home', {random_id, message, login, server_url});
                     }).pipe(fs.createWriteStream(validate_code_img));
@@ -89,12 +93,16 @@ app.get('/', function (req, res) {
                         try {
                             res.cookie('identity', encryption.encryptText(response.headers["set-cookie"].toString().substring(0, 32)),{maxAge:2678400000, path:'/', httpOnly:true});
                         } catch(err) {
-                            res.redirect(server_url);
+                            res.clearCookie('user');
+                            res.clearCookie('identity');
+                            res.clearCookie('ticket');
+                            res.redirect(server_url + '?message=访问教务系统错误，请重试');
                         }
                     } else {
                         res.clearCookie('user');
+                        res.clearCookie('identity');
                         res.clearCookie('ticket');
-                        res.redirect(server_url + '?message=查询失败，当前无法访问教务系统');
+                        res.redirect(server_url + '?message=访问教务系统错误，请重试');
                     }
                     res.render('home', {random_id, message, login, server_url});
                 }).pipe(fs.createWriteStream(validate_code_img));
@@ -104,7 +112,6 @@ app.get('/', function (req, res) {
         login = 0;
         res.render('home', {random_id, message, login, server_url});
     }
-    //setTimeout(renderPage, 4000);
 });
 
 app.get('/sign_in', function (req, res) {
@@ -117,7 +124,11 @@ app.post('/sign_in', urlencodedParser, function (req, res) {
     res.clearCookie('ticket');
     var re_id = /^\d{10}$/;
     if (re_id.test(req.body.id) && req.body.password !== '') {
-        res.cookie('user', {id: encryption.encryptText(req.body.id), password: encryption.encryptText(req.body.password)},{maxAge:2678400000,path:'/',httpOnly:true});
+        try {
+            res.cookie('user', {id: encryption.encryptText(req.body.id), password: encryption.encryptText(req.body.password)},{maxAge:2678400000,path:'/',httpOnly:true});
+        } catch(err) {
+            res.redirect(server_url);
+        }
         res.redirect(server_url);
     } else {
         res.redirect(server_url + '?message=请输入正确的学号');
@@ -172,6 +183,8 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
                 var calculator = new Calculator(grades, 'all');
                 var content = calculator.purifyTable();
                 var gpa = calculator.calculateGPA();
+                if (isNaN(gpa))
+                    res.redirect(server_url + '?message=查询失败，请确认学号，密码以及验证码均输入正确');
                 res.render('grades', {server_url, gpa, content, type: 'all'});
             });
         } else if (req.body.method === 'current') {
@@ -180,6 +193,8 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
                 var calculator = new Calculator(grades, 'current');
                 var content = calculator.purifyTable();
                 var gpa = calculator.calculateGPA();
+                if (isNaN(gpa))
+                    res.redirect(server_url + '?message=查询失败，请确认学号，密码以及验证码均输入正确');
                 res.render('grades', {server_url, gpa, content, type: 'current'});
             });
         }
