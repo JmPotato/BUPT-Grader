@@ -38,9 +38,6 @@ app.all('*', function(req, res, next) {
 });
 
 app.get('/', function (req, res) {
-    function renderPage () {
-        res.render('home', {random_id, message, login, server_url});
-    };
     var login = 0;
     var random_id = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
     var validate_code_img = __dirname + '/public/vc/validate_code_' + random_id + '.jpg';
@@ -72,31 +69,42 @@ app.get('/', function (req, res) {
                     res.cookie('ticket', encryption.encryptText(response.headers["set-cookie"].toString().substring(0, 47)), {maxAge:2678400000, path:'/', httpOnly:true});
                     request.get({url: 'http://jwxt.bupt.edu.cn/validateCodeAction.do?random=', encoding: null, headers: {'Cookie': response.headers["set-cookie"].toString().substring(0, 47)}}, function (error, response, body) {
                         if (!error) {
-                            res.cookie('identity', encryption.encryptText(response.headers["set-cookie"].toString().substring(0, 32)),{maxAge:2678400000, path:'/', httpOnly:true});
+                            try {
+                                res.cookie('identity', encryption.encryptText(response.headers["set-cookie"].toString().substring(0, 32)),{maxAge:2678400000, path:'/', httpOnly:true});
+                            } catch(err) {
+                                res.redirect(server_url);
+                            }
                         } else {
                             res.clearCookie('user');
                             res.clearCookie('ticket');
                             res.redirect(server_url + '?message=查询失败，当前无法访问教务系统');
                         }
+                        res.render('home', {random_id, message, login, server_url});
                     }).pipe(fs.createWriteStream(validate_code_img));
                 });
             } else {
                 res.cookie('ticket', encryption.encryptText(''), {maxAge:2678400000, path:'/', httpOnly:true});
                 request.get({url: 'http://jwxt.bupt.edu.cn/validateCodeAction.do?random=', encoding: null}, function (error, response, body) {
                     if (!error) {
-                        res.cookie('identity', encryption.encryptText(response.headers["set-cookie"].toString().substring(0, 32)),{maxAge:2678400000, path:'/', httpOnly:true});
+                        try {
+                            res.cookie('identity', encryption.encryptText(response.headers["set-cookie"].toString().substring(0, 32)),{maxAge:2678400000, path:'/', httpOnly:true});
+                        } catch(err) {
+                            res.redirect(server_url);
+                        }
                     } else {
                         res.clearCookie('user');
                         res.clearCookie('ticket');
                         res.redirect(server_url + '?message=查询失败，当前无法访问教务系统');
                     }
+                    res.render('home', {random_id, message, login, server_url});
                 }).pipe(fs.createWriteStream(validate_code_img));
             }
         });
     } else {
         login = 0;
+        res.render('home', {random_id, message, login, server_url});
     }
-    setTimeout(renderPage, 4000);
+    //setTimeout(renderPage, 4000);
 });
 
 app.get('/sign_in', function (req, res) {
