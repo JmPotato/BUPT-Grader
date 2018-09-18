@@ -5,7 +5,7 @@
         <% if (type === 'current') { %>
             <h5><a href="<% server_url %>"><-</a>当前学期成绩</h5>
             <div>
-                <h6>本学期平均分：<%=gpa %>（含任选课）</h6>
+                <h6>本学期平均分：<%=gpa %>（不含任选课）</h6>
             </div>
         <% } %>
         <% if (type === 'all') { %>

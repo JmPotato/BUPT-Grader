@@ -47,6 +47,12 @@ app.get('/', function (req, res) {
     if (req.cookies.ticket)
         res.clearCookie('ticket');
     if (req.cookies.user) {
+        try {
+            encryption.decryptText(req.cookies.user.id);
+        } catch(err) {
+            res.redirect(server_url + '/sign_out');
+            res.end();
+        }
         login = 1;
         request.get({url: 'http://jwxt.bupt.edu.cn/wengine-auth/login/', encoding: null, gzip: true}, function (error, response, body) {
             var $ = cheerio.load(iconv.decode(body, 'utf8'));
@@ -61,12 +67,20 @@ app.get('/', function (req, res) {
                 };
                 var form = {
                     auth_type: 'local',
-                    username: encryption.decryptText(req.cookies.user.id),
+                    username: config.net_user,
                     sms_code: '',
-                    password: encryption.decryptText(req.cookies.user.password),
+                    password: config.net_password,
                 };
                 request.post({url: 'http://jwxt.bupt.edu.cn/wengine-auth/login/', encoding: null, gzip: true, headers: post_headers, form: form}, function (error, response, body) {
-                    res.cookie('ticket', encryption.encryptText(response.headers["set-cookie"].toString().substring(0, 47)), {maxAge:2678400000, path:'/', httpOnly:true});
+                    try {
+                        res.cookie('ticket', encryption.encryptText(response.headers["set-cookie"].toString().substring(0, 47)), {maxAge:2678400000, path:'/', httpOnly:true});
+                    } catch(err) {
+                        res.clearCookie('user');
+                        res.clearCookie('identity');
+                        res.clearCookie('ticket');
+                        res.redirect(server_url + '?message=访问教务系统错误，请重试');
+                        return 0;
+                    }
                     request.get({url: 'http://jwxt.bupt.edu.cn/validateCodeAction.do?random=', encoding: null, headers: {'Cookie': response.headers["set-cookie"].toString().substring(0, 47)}}, function (error, response, body) {
                         if (!error) {
                             try {
@@ -76,18 +90,28 @@ app.get('/', function (req, res) {
                                 res.clearCookie('identity');
                                 res.clearCookie('ticket');
                                 res.redirect(server_url + '?message=访问教务系统错误，请重试');
+                                return 0;
                             }
                         } else {
                             res.clearCookie('user');
                             res.clearCookie('identity');
                             res.clearCookie('ticket');
                             res.redirect(server_url + '?message=访问教务系统错误，请重试');
+                            return 0;
                         }
                         res.render('home', {random_id, message, login, server_url});
                     }).pipe(fs.createWriteStream(validate_code_img));
                 });
             } else {
-                res.cookie('ticket', encryption.encryptText(''), {maxAge:2678400000, path:'/', httpOnly:true});
+                try {
+                    res.cookie('ticket', encryption.encryptText(response.headers["set-cookie"].toString().substring(0, 47)), {maxAge:2678400000, path:'/', httpOnly:true});
+                } catch(err) {
+                    res.clearCookie('user');
+                    res.clearCookie('identity');
+                    res.clearCookie('ticket');
+                    res.redirect(server_url + '?message=访问教务系统错误，请重试');
+                    return 0;
+                }
                 request.get({url: 'http://jwxt.bupt.edu.cn/validateCodeAction.do?random=', encoding: null}, function (error, response, body) {
                     if (!error) {
                         try {
@@ -97,12 +121,14 @@ app.get('/', function (req, res) {
                             res.clearCookie('identity');
                             res.clearCookie('ticket');
                             res.redirect(server_url + '?message=访问教务系统错误，请重试');
+                            return 0;
                         }
                     } else {
                         res.clearCookie('user');
                         res.clearCookie('identity');
                         res.clearCookie('ticket');
                         res.redirect(server_url + '?message=访问教务系统错误，请重试');
+                        return 0;
                     }
                     res.render('home', {random_id, message, login, server_url});
                 }).pipe(fs.createWriteStream(validate_code_img));
@@ -183,8 +209,10 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
                 var calculator = new Calculator(grades, 'all');
                 var content = calculator.purifyTable();
                 var gpa = calculator.calculateGPA();
-                if (isNaN(gpa))
-                    res.redirect(server_url + '?message=查询失败，请确认学号，密码以及验证码均输入正确');
+                if (!Boolean(content.text())) {
+                    res.redirect(server_url + '?message=尚未查询到成绩（请确认学号，密码以及验证码均输入正确）');
+                    return 0;
+                }
                 res.render('grades', {server_url, gpa, content, type: 'all'});
             });
         } else if (req.body.method === 'current') {
@@ -193,8 +221,10 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
                 var calculator = new Calculator(grades, 'current');
                 var content = calculator.purifyTable();
                 var gpa = calculator.calculateGPA();
-                if (isNaN(gpa))
-                    res.redirect(server_url + '?message=查询失败，请确认学号，密码以及验证码均输入正确');
+                if (!Boolean(content.text())) {
+                    res.redirect(server_url + '?message=尚未查询到成绩（请确认学号，密码以及验证码均输入正确）');
+                    return 0;
+                }
                 res.render('grades', {server_url, gpa, content, type: 'current'});
             });
         }

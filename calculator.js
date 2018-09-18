@@ -12,18 +12,28 @@ function Calculator(grades, type) {
     };
     this.calculateGPA = function () {
         var grades_sum = 0;
-        var point_sum = 0;
+        var points_sum = 0;
+        var all_points = 0;
         if (type === 'all')
             $('.table').last().remove();
         $('tr.odd').each(function(i, elem) {
+            if ($(this).children().eq(5).text().replace(/\s+/g,"") === '任选')
+                return 0;
             var grade = parseFloat($(this).children().eq(6).text().replace(/\s+/g,""));
             var point = parseFloat($(this).children().eq(4).text().replace(/\s+/g,""));
-            if (!isNaN(grade) && !isNaN(point)) {
+            if (!isNaN(grade)) {
                 grades_sum += grade * point;
-                point_sum += point;
+                points_sum += point;
+            }
+            if (!isNaN(point)) {
+                all_points += point;
             }
         });
-        return grades_sum/point_sum;
+        if (grades_sum === 0 && all_points !== 0) {
+            return 0
+        } else {
+            return grades_sum/points_sum;
+        }
     };
 };
 
