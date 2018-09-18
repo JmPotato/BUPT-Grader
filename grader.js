@@ -9,7 +9,6 @@ var utils = new Utils();
 var encryption = new Encryption(config.key);
 
 var fs = require('fs');
-var ejs = require('ejs');
 var cheerio = require("cheerio");
 var express = require('express');
 var request = require('request');
@@ -25,7 +24,6 @@ app.use(cookieParser());
 app.set('views', __dirname + '/public');
 app.set("view engine", "html");
 app.engine('html', require('ejs').renderFile);
-
 
 app.all('*', function(req, res, next) {
     res.header("Access-Control-Allow-Origin", req.headers.origin);
