@@ -1,5 +1,3 @@
-'use strict';
-
 var cheerio = require("cheerio");
 
 function Calculator(grades, type) {

@@ -1,5 +1,3 @@
-'use strict';
-
 var config = require('./config.js');
 var Utils = require('./utils.js');
 var Calculator = require('./calculator.js');
