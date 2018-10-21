@@ -50,7 +50,7 @@ app.get('/', function (req, res) {
             res.end();
         }
         login = 1;
-        request.get({url: 'http://jwxt.bupt.edu.cn/wengine-auth/login/', encoding: null, gzip: true}, function (error, response, body) {
+        request.get({url: 'https://jwxt.bupt.edu.cn/wengine-auth/login/', encoding: null, gzip: true}, function (error, response, body) {
             var $ = cheerio.load(iconv.decode(body, 'utf8'));
             if ($("title").text() === '外网访问门户') {
                 var post_headers = {
@@ -67,7 +67,7 @@ app.get('/', function (req, res) {
                     sms_code: '',
                     password: config.net_password,
                 };
-                request.post({url: 'http://jwxt.bupt.edu.cn/wengine-auth/login/', encoding: null, gzip: true, headers: post_headers, form: form}, function (error, response, body) {
+                request.post({url: 'https://jwxt.bupt.edu.cn/wengine-auth/login/', encoding: null, gzip: true, headers: post_headers, form: form}, function (error, response, body) {
                     try {
                         res.cookie('ticket', encryption.encryptText(response.headers["set-cookie"].toString().substring(0, 47)), {maxAge:2678400000, path:'/', httpOnly:true});
                     } catch(err) {
@@ -77,7 +77,7 @@ app.get('/', function (req, res) {
                         res.redirect(server_url + '?message=访问教务系统错误，请重试');
                         return 0;
                     }
-                    request.get({url: 'http://jwxt.bupt.edu.cn/validateCodeAction.do?random=', encoding: null, headers: {'Cookie': response.headers["set-cookie"].toString().substring(0, 47)}}, function (error, response, body) {
+                    request.get({url: 'https://jwxt.bupt.edu.cn/validateCodeAction.do?random=', encoding: null, headers: {'Cookie': response.headers["set-cookie"].toString().substring(0, 47)}}, function (error, response, body) {
                         if (!error) {
                             try {
                                 res.cookie('identity', encryption.encryptText(response.headers["set-cookie"].toString().substring(0, 32)),{maxAge:2678400000, path:'/', httpOnly:true});
@@ -108,7 +108,7 @@ app.get('/', function (req, res) {
                     res.redirect(server_url + '?message=访问教务系统错误，请重试');
                     return 0;
                 }
-                request.get({url: 'http://jwxt.bupt.edu.cn/validateCodeAction.do?random=', encoding: null}, function (error, response, body) {
+                request.get({url: 'https://jwxt.bupt.edu.cn/validateCodeAction.do?random=', encoding: null}, function (error, response, body) {
                     if (!error) {
                         try {
                             res.cookie('identity', encryption.encryptText(response.headers["set-cookie"].toString().substring(0, 32)),{maxAge:2678400000, path:'/', httpOnly:true});
@@ -198,9 +198,9 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
         v_yzm: req.body.validate_code,
     };
     var grades = '';
-    request.post({url: 'http://jwxt.bupt.edu.cn/jwLoginAction.do', encoding: null, gzip: true, headers: post_headers, form: form}, function (error, response, body) {
+    request.post({url: 'https://jwxt.bupt.edu.cn/jwLoginAction.do', encoding: null, gzip: true, headers: post_headers, form: form}, function (error, response, body) {
         if (req.body.method === 'all') {
-            request.get({url:'http://jwxt.bupt.edu.cn/gradeLnAllAction.do?type=ln&oper=sxinfo&lnsxdm=001', encoding: null, gzip: true, headers: get_headers}, function (error, r, body) {
+            request.get({url:'https://jwxt.bupt.edu.cn/gradeLnAllAction.do?type=ln&oper=sxinfo&lnsxdm=001', encoding: null, gzip: true, headers: get_headers}, function (error, r, body) {
                 grades = iconv.decode(body, 'gb2312');
                 var calculator = new Calculator(grades, 'all');
                 var content = calculator.purifyTable();
@@ -212,7 +212,7 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
                 res.render('grades', {server_url, gpa, content, type: 'all'});
             });
         } else if (req.body.method === 'current') {
-            request.get({url:'http://jwxt.bupt.edu.cn/bxqcjcxAction.do', encoding: null, gzip: true, headers: get_headers}, function (error, r, body) {
+            request.get({url:'https://jwxt.bupt.edu.cn/bxqcjcxAction.do', encoding: null, gzip: true, headers: get_headers}, function (error, r, body) {
                 grades = iconv.decode(body, 'gb2312');
                 var calculator = new Calculator(grades, 'current');
                 var content = calculator.purifyTable();
