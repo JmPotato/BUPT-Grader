@@ -1,0 +1,1 @@
+This folder is for validate code images to store.
