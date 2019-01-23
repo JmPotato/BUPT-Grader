@@ -50,9 +50,10 @@ app.get('/', function (req, res) {
             res.end();
         }
         login = 1;
-        request.get({url: 'https://webvpn.bupt.edu.cn/', encoding: null, gzip: true}, function (error, response, body) {
+        request.get({url: 'https://vpn.bupt.edu.cn/global-protect/login.esp', encoding: null, gzip: true}, function (error, response, body) {
             try {
-                res.cookie('vpn_ticket', encryption.encryptText(response.headers["set-cookie"].toString().substring(0,47), {maxAge:2678400000, path:'/', httpOnly:true}));
+                var ticket_1 = response.headers["set-cookie"].toString().substring(0,42);
+                res.cookie('vpn_ticket', encryption.encryptText(response.headers["set-cookie"].toString().substring(0,42), {maxAge:2678400000, path:'/', httpOnly:true}));
             } catch(err) {
                 res.clearCookie('user');
                 res.clearCookie('identity');
@@ -67,35 +68,47 @@ app.get('/', function (req, res) {
                 'Accept-Encoding': 'gzip, deflate',
                 'content-type': 'application/x-www-form-urlencoded',
                 'Connection': 'keep-alive',
-                'Cookie': response.headers["set-cookie"].toString().substring(0,47),
+                'Cookie': response.headers["set-cookie"].toString().substring(0,42),
             };
-            var form = {
+            /*var form = {
                 auth_type: 'local',
                 username: config.net_user,
                 sms_code: '',
                 password: config.net_password,
+            };*/
+            var form = {
+                prot: 'https:',
+                server: 'vpn.bupt.edu.cn',
+                inputStr: '',
+                action: 'getsoftware',
+                user: config.net_user,
+                passwd: config.net_password,
+                ok: 'Log In'
             };
-            request.post({url: 'https://webvpn.bupt.edu.cn/wengine-auth/dologin/?from=webvpn.bupt.edu.cn/', encoding: null, gzip: true, headers: post_headers, form: form}, function (error, response, body) {
-                request.get({url: 'https://webvpn.bupt.edu.cn/http/jwxt.bupt.edu.cn/validateCodeAction.do?vpn-1&random=', encoding: null, headers: {'Cookie': response.headers["set-cookie"].toString().substring(0,47)}}, function (error, response, body) {
-                    if (!error) {
-                        try {
-                            res.cookie('identity', encryption.encryptText(response.headers["set-cookie"].toString().substring(0, 35)),{maxAge:2678400000, path:'/', httpOnly:true});
-                        } catch(err) {
+            request.post({url: 'https://vpn.bupt.edu.cn/global-protect/login.esp', encoding: null, gzip: true, headers: post_headers, form: form}, function (error, response, body) {
+                request.get({url: 'https://vpn.bupt.edu.cn/global-protect/portal/portal.esp', encoding: null, headers: {'Cookie': ticket_1}}, function (error, response, body) {
+                    var ticket_2 = response.headers["set-cookie"].toString().substring(0,46);
+                    request.get({url: 'https://vpn.bupt.edu.cn/http/jwxt.bupt.edu.cn/validateCodeAction.do?gp-1&random=', encoding: null, headers: {'Cookie': ticket_1 + '; ' + ticket_2}}, function (error, response, body) {
+                        if (!error) {
+                            try {
+                                res.cookie('identity', encryption.encryptText(ticket_2),{maxAge:2678400000, path:'/', httpOnly:true});
+                            } catch(err) {
+                                res.clearCookie('user');
+                                res.clearCookie('identity');
+                                res.clearCookie('vpn_ticket');
+                                res.redirect(server_url + '?message=访问教务系统错误，请重试');
+                                return 0;
+                            }
+                        } else {
                             res.clearCookie('user');
                             res.clearCookie('identity');
                             res.clearCookie('vpn_ticket');
                             res.redirect(server_url + '?message=访问教务系统错误，请重试');
                             return 0;
                         }
-                    } else {
-                        res.clearCookie('user');
-                        res.clearCookie('identity');
-                        res.clearCookie('vpn_ticket');
-                        res.redirect(server_url + '?message=访问教务系统错误，请重试');
-                        return 0;
-                    }
-                    res.render('home', {random_id, message, login, server_url});
-                }).pipe(fs.createWriteStream(validate_code_img));
+                        res.render('home', {random_id, message, login, server_url});
+                    }).pipe(fs.createWriteStream(validate_code_img));
+                });
             });
         });
     } else {
@@ -149,7 +162,7 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
         'Accept-Encoding': 'gzip, deflate',
         'content-type': 'application/x-www-form-urlencoded',
         'Connection': 'keep-alive',
-        'Cookie': encryption.decryptText(req.cookies.identity) + '; ' + encryption.decryptText(req.cookies.vpn_ticket),
+        'Cookie': encryption.decryptText(req.cookies.identity) + '; ' + encryption.decryptText(req.cookies.vpn_ticket) + "; PAN_GP_CK_VER=2; PAN_GP_CACHE_LOCAL_VER_ON_SERVER=0; GP_CLIENT_CK_UPDATES=; PAN_GP_CK_VER_ON_CLIENT=2",
     };
     var get_headers = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1.2 Safari/605.1.15',
@@ -157,7 +170,7 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
         'Accept-Language': 'zh-CN,zh;q=0.9',
         'Accept-Encoding': 'gzip, deflate',
         'Connection': 'keep-alive',
-        'Cookie': encryption.decryptText(req.cookies.identity) + '; ' + encryption.decryptText(req.cookies.vpn_ticket),
+        'Cookie': encryption.decryptText(req.cookies.identity) + '; ' + encryption.decryptText(req.cookies.vpn_ticket) + "; PAN_GP_CK_VER=2; PAN_GP_CACHE_LOCAL_VER_ON_SERVER=0; GP_CLIENT_CK_UPDATES=; PAN_GP_CK_VER_ON_CLIENT=2",
     };
     var form = {
         type: 'sso',
@@ -166,9 +179,9 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
         v_yzm: req.body.validate_code,
     };
     var grades = '';
-    request.post({url: 'https://webvpn.bupt.edu.cn/http/jwxt.bupt.edu.cn/jwLoginAction.do', encoding: null, gzip: true, headers: post_headers, form: form}, function (error, response, body) {
+    request.post({url: 'https://vpn.bupt.edu.cn/http/jwxt.bupt.edu.cn/jwLoginAction.do', encoding: null, gzip: true, headers: post_headers, form: form}, function (error, response, body) {
         if (req.body.method === 'all') {
-            request.get({url:'https://webvpn.bupt.edu.cn/http/jwxt.bupt.edu.cn/gradeLnAllAction.do?type=ln&oper=sxinfo&lnsxdm=001', encoding: null, gzip: true, headers: get_headers}, function (error, r, body) {
+            request.get({url:'https://vpn.bupt.edu.cn/http/jwxt.bupt.edu.cn/gradeLnAllAction.do?type=ln&oper=sxinfo&lnsxdm=001', encoding: null, gzip: true, headers: get_headers}, function (error, r, body) {
                 grades = iconv.decode(body, 'gb2312');
                 var calculator = new Calculator(grades, 'all');
                 var content = calculator.purifyTable();
@@ -180,7 +193,7 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
                 res.render('grades', {server_url, gpa, content, type: 'all'});
             });
         } else if (req.body.method === 'current') {
-            request.get({url:'https://webvpn.bupt.edu.cn/http/jwxt.bupt.edu.cn/bxqcjcxAction.do', encoding: null, gzip: true, headers: get_headers}, function (error, r, body) {
+            request.get({url:'https://vpn.bupt.edu.cn/http/jwxt.bupt.edu.cn/bxqcjcxAction.do', encoding: null, gzip: true, headers: get_headers}, function (error, r, body) {
                 grades = iconv.decode(body, 'gb2312');
                 var calculator = new Calculator(grades, 'current');
                 var content = calculator.purifyTable();
