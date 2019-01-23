@@ -187,7 +187,7 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
                 var content = calculator.purifyTable();
                 var gpa = calculator.calculateGPA();
                 if (!Boolean(content.text())) {
-                    res.redirect(server_url + '?message=尚未查询到成绩（请确认学号，密码以及验证码均输入正确）');
+                    res.redirect(server_url + '?message=尚未查询到成绩（请确认学号，密码和验证码均输入正确，以及确认验证码是否过期）');
                     return 0;
                 }
                 res.render('grades', {server_url, gpa, content, type: 'all'});
@@ -199,7 +199,7 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
                 var content = calculator.purifyTable();
                 var gpa = calculator.calculateGPA();
                 if (!Boolean(content.text())) {
-                    res.redirect(server_url + '?message=尚未查询到成绩（请确认学号，密码以及验证码均输入正确）');
+                    res.redirect(server_url + '?message=尚未查询到成绩（请确认学号，密码和验证码均输入正确，以及确认验证码是否过期）');
                     return 0;
                 }
                 res.render('grades', {server_url, gpa, content, type: 'current'});
@@ -209,7 +209,7 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
 });
 
 app.get('/logout.do', function (req, res) {
-    res.redirect(server_url + '?message=查询失败，请确认学号，密码以及验证码均输入正确');
+    res.redirect(server_url + '?message=尚未查询到成绩（请确认学号，密码和验证码均输入正确，以及确认验证码是否过期）');
 });
 
 var server = app.listen(server_port, function () {
