@@ -88,24 +88,24 @@ app.get('/', function (req, res) {
             request.post({url: 'https://vpn.bupt.edu.cn/global-protect/login.esp', encoding: null, gzip: true, headers: post_headers, form: form}, function (error, response, body) {
                 request.get({url: 'https://vpn.bupt.edu.cn/global-protect/portal/portal.esp', encoding: null, headers: {'Cookie': ticket_1}}, function (error, response, body) {
                     var ticket_2 = response.headers["set-cookie"].toString().substring(0,46);
-                    request.get({url: 'https://vpn.bupt.edu.cn/http/jwxt.bupt.edu.cn/validateCodeAction.do?gp-1&random=', encoding: null, headers: {'Cookie': ticket_1 + '; ' + ticket_2}}, function (error, response, body) {
-                        if (!error) {
-                            try {
-                                res.cookie('identity', encryption.encryptText(ticket_2),{maxAge:2678400000, path:'/', httpOnly:true});
-                            } catch(err) {
-                                res.clearCookie('user');
-                                res.clearCookie('identity');
-                                res.clearCookie('vpn_ticket');
-                                res.redirect(server_url + '?message=访问教务系统错误，请重试');
-                                return 0;
-                            }
-                        } else {
+                    if (!error) {
+                        try {
+                            res.cookie('identity', encryption.encryptText(ticket_2),{maxAge:2678400000, path:'/', httpOnly:true});
+                        } catch(err) {
                             res.clearCookie('user');
                             res.clearCookie('identity');
                             res.clearCookie('vpn_ticket');
                             res.redirect(server_url + '?message=访问教务系统错误，请重试');
                             return 0;
                         }
+                    } else {
+                        res.clearCookie('user');
+                        res.clearCookie('identity');
+                        res.clearCookie('vpn_ticket');
+                        res.redirect(server_url + '?message=访问教务系统错误，请重试');
+                        return 0;
+                    }
+                    request.get({url: 'https://vpn.bupt.edu.cn/http/jwxt.bupt.edu.cn/validateCodeAction.do?gp-1&random=', encoding: null, headers: {'Cookie': ticket_1 + '; ' + ticket_2}}, function (error, response, body) {
                         res.render('home', {random_id, message, login, server_url});
                     }).pipe(fs.createWriteStream(validate_code_img));
                 });
