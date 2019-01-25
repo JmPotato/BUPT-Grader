@@ -19,6 +19,7 @@
         </form>
         <script>
             setTimeout("location.reload(true);", 6000000);
+            document.getElementById("validate_code").select();
         </script>
     <% } else { %>
         <form class="form-signin" action="<% server_url %>/sign_in" method="POST">
