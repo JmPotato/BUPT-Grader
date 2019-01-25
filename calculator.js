@@ -4,9 +4,9 @@ function Calculator(grades, type) {
     var $ = cheerio.load(grades);
     this.purifyTable = function () {
         if (type === 'current')
-            return $("table.displayTag").removeClass('displayTag').addClass('table').attr('cellpadding', null).attr('width', null).attr('cellspacing', null).attr('border', null).attr('id', null);
+            return $("table.displayTag").removeClass('displayTag').addClass('table').attr('width', null).attr('id', 'grades');
         if (type === 'all')
-            return $("table.titleTop2").removeClass('titleTop2').addClass('table').attr('cellpadding', null).attr('width', null).attr('cellspacing', null).attr('border', null);
+            return $("table.titleTop2").removeClass('titleTop2').addClass('table').attr('width', null);
     };
     this.calculateGPA = function () {
         var grades_sum = 0;

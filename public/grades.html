@@ -7,12 +7,32 @@
             <div>
                 <h6>本学期平均分：<%=gpa %>（不含任选课）</h6>
             </div>
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    $("th:nth-child(1)").remove();
+                    $("th:nth-child(1)").remove();
+                    $("th:nth-child(2)").remove();
+                    $("td:nth-child(1)").remove();
+                    $("td:nth-child(1)").remove();
+                    $("td:nth-child(2)").remove();
+                });
+            </script>
         <% } %>
         <% if (type === 'all') { %>
             <h5><a data-toggle="tooltip" data-placement="left" title="返回" onclick="window.history.go(-1);"><-</a>所有学期成绩</h5>
             <div>
                 <h6>总学期平均分：<%=gpa %>（不含任选课）</h6>
             </div>
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    $("th.sortable:nth-child(1)").remove();
+                    $("th.sortable:nth-child(1)").remove();
+                    $("th.sortable:nth-child(2)").remove();
+                    $("td[align=center]:nth-child(1)").remove();
+                    $("td[align=center]:nth-child(1)").remove();
+                    $("td[align=center]:nth-child(2)").remove();
+                });
+            </script>
         <% } %>
         <div class="table-container">
             <%- content %>
