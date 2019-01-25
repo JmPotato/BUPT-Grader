@@ -6,7 +6,7 @@
             <h1 class="h3 mb-3 font-weight-normal">北邮教务成绩查询</h1>
             <% if (message) { %><p class="message"><%=message%></p><% } %>
             <img data-toggle="tooltip" data-placement="left" title="点击更换验证码" onclick="location.href='<% server_url %>'" class="validate" src="./vc/validate_code_<%=random_id%>.jpg">
-            <input type="text" class="form-control" id="validate_code" name="validate_code">
+            <input type="text" class="form-control" id="validate_code" name="validate_code" value="<%=ocr%>">
             <div class="checkbox mb-3" style="margin-top:17px;">
                 <label>
                     <input type="radio" value="current" name="method" checked="checked">&nbsp;当前学期成绩&nbsp;
@@ -17,15 +17,8 @@
             <input onclick="location.href='<% server_url %>/sign_out'" class="btn btn-lg btn-primary btn-block" value="注销">
             <% include footer.html %>
         </form>
-        <script src='https://cdn.jsdelivr.net/gh/naptha/tesseract.js@v1.0.14/dist/tesseract.min.js'></script>
         <script>
             setTimeout("location.reload(true);", 6000000);
-            Tesseract.recognize("./vc/validate_code_<%=random_id%>.jpg", {
-                lang: 'eng',
-            }).then(function(result){
-                document.getElementById("validate_code").value = result.text.replace(/\s+/g,"");
-                document.getElementById("validate_code").select();
-            })
         </script>
     <% } else { %>
         <form class="form-signin" action="<% server_url %>/sign_in" method="POST">
