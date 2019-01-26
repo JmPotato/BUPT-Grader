@@ -68,7 +68,9 @@ app.get('/', function (req, res) {
                     res.render('home', {ocr, random_id, message, login, server_url});
                 }
             }).catch(err => {
-
+                res.clearCookie('identity');
+                res.redirect(server_url);
+                res.end();
             });
         }).catch(err => {
             res.clearCookie('user');
