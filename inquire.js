@@ -107,7 +107,7 @@ function Inquire(jwxt_id, jwxt_password, type) {
                         if (!Boolean(content.text())) {
                             reject(new Error("Faild to get the grades."));
                         }
-                        resolve(content, gpa.toFixed(4));
+                        resolve([content, gpa.toFixed(4)]);
                     });
                 } else if (method === 'current') {
                     request.get({url: jwxt_url + '/bxqcjcxAction.do', encoding: null, gzip: true, headers: get_headers}, function (error, r, body) {
@@ -118,7 +118,7 @@ function Inquire(jwxt_id, jwxt_password, type) {
                         if (!Boolean(content.text())) {
                             reject(new Error("Faild to get the grades."));
                         }
-                        resolve(content, gpa.toFixed(4));
+                        resolve([content, gpa.toFixed(4)]);
                     });
                 }
             });

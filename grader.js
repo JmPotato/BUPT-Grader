@@ -133,8 +133,8 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
         res.end();
     }
     var jwxt = new Inquire(jwxt_id, jwxt_password, config.type);
-    jwxt.getGrades(req.body.method, req.body.validate_code, encryption.decryptText(req.cookies.identity)).then((content, gpa) => {
-        res.render('grades', {server_url, gpa, content, type: req.body.method});
+    jwxt.getGrades(req.body.method, req.body.validate_code, encryption.decryptText(req.cookies.identity)).then(grades => {
+        res.render('grades', {server_url, gpa: grades[1], content: grades[0], type: req.body.method});
     }).catch(err => {
         res.redirect(server_url + '?message=尚未查询到成绩（请确认学号，密码和验证码均输入正确，以及确认验证码是否过期）');
         res.end();
