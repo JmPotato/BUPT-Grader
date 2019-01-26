@@ -53,22 +53,29 @@ app.get('/', function (req, res) {
             res.end();
         }
         var jwxt = new Inquire(jwxt_id, jwxt_password, config.type);
-        try {
-            jwxt.getCAPTCHA(validate_code_img, function(identity) {
-                tesseract.recognize(validate_code_img, {
-                    lang: 'eng'
-                }).then(function(result) {
-                    var ocr = result.text.replace(/\s+/g,"");
+        jwxt.getCAPTCHA(validate_code_img).then(identity => {
+            tesseract.recognize(validate_code_img, {
+                lang: 'eng'
+            }).then(function(result) {
+                var ocr = result.text.replace(/\s+/g,"");
+                var correction = /^[a-zA-Z0-9]{4}$/;
+                if(!correction.test(ocr)) {
+                    res.clearCookie('identity');
+                    res.redirect(server_url);
+                    res.end();
+                } else {
                     res.cookie('identity', encryption.encryptText(identity), {maxAge:6000000, path:'/', httpOnly:true});
                     res.render('home', {ocr, random_id, message, login, server_url});
-                });
+                }
+            }).catch(err => {
+
             });
-        } catch(err) {
+        }).catch(err => {
             res.clearCookie('user');
             res.clearCookie('identity');
             res.redirect(server_url + '?message=访问教务系统错误，请重试');
             res.end();
-        }
+        });
     } else {
         login = 0;
         res.render('home', {random_id, message, login, server_url});
@@ -126,14 +133,12 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
         res.end();
     }
     var jwxt = new Inquire(jwxt_id, jwxt_password, config.type);
-    try {
-        jwxt.getGrades(req.body.method, req.body.validate_code, encryption.decryptText(req.cookies.identity), function(content, gpa) {
-            res.render('grades', {server_url, gpa, content, type: req.body.method});
-        });
-    } catch(err) {
+    jwxt.getGrades(req.body.method, req.body.validate_code, encryption.decryptText(req.cookies.identity)).then((content, gpa) => {
+        res.render('grades', {server_url, gpa, content, type: req.body.method});
+    }).catch(err => {
         res.redirect(server_url + '?message=尚未查询到成绩（请确认学号，密码和验证码均输入正确，以及确认验证码是否过期）');
         res.end();
-    }
+    });
 });
 
 app.get('/logout.do', function (req, res) {
