@@ -67,7 +67,7 @@ app.get('/', function (req, res) {
                 res.end();
             });
         }).catch(err => {
-            if(err === "Wrong Answer.") {
+            if(err.message === "Wrong Answer.") {
                 res.clearCookie('identity');
                 res.redirect(server_url);
                 res.end();
