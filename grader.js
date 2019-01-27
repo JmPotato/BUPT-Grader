@@ -57,26 +57,26 @@ app.get('/', function (req, res) {
             tesseract.recognize(validate_code_img, {
                 lang: 'eng'
             }).then(function(result) {
-                var ocr = result.text.replace(/\s+/g,"");
-                var correction = /^[a-zA-Z0-9]{4}$/;
-                if(!correction.test(ocr)) {
-                    res.clearCookie('identity');
-                    res.redirect(server_url);
-                    res.end();
-                } else {
-                    res.cookie('identity', encryption.encryptText(identity), {maxAge:6000000, path:'/', httpOnly:true});
-                    res.render('home', {ocr, random_id, message, login, server_url});
-                }
+                res.cookie('identity', encryption.encryptText(identity), {maxAge:6000000, path:'/', httpOnly:true});
+                res.cookie('captcha', encryption.encryptText(identity), {maxAge:6000000, path:'/', httpOnly:true});
+                res.render('home', {message, login, server_url});
             }).catch(err => {
+                res.clearCookie('user');
                 res.clearCookie('identity');
-                res.redirect(server_url);
+                res.redirect(server_url + '?message=访问教务系统错误，请重试');
                 res.end();
             });
         }).catch(err => {
-            res.clearCookie('user');
-            res.clearCookie('identity');
-            res.redirect(server_url + '?message=访问教务系统错误，请重试');
-            res.end();
+            if(err === "Wrong Answer.") {
+                res.clearCookie('identity');
+                res.redirect(server_url);
+                res.end();
+            } else {
+                res.clearCookie('user');
+                res.clearCookie('identity');
+                res.redirect(server_url + '?message=访问教务系统错误，请重试');
+                res.end();
+            }
         });
     } else {
         login = 0;
@@ -123,10 +123,6 @@ app.get('/get_grades', function (req, res) {
 
 app.post('/get_grades', urlencodedParser, function (req, res) {
     utils.deleteImgs();
-    if (!req.body.validate_code) {
-        res.redirect(server_url + '?message=请输入验证码');
-        res.end();
-    }
     try {
         var jwxt_id = encryption.decryptText(req.cookies.user.id);
         var jwxt_password = encryption.decryptText(req.cookies.user.password);
@@ -135,7 +131,7 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
         res.end();
     }
     var jwxt = new Inquire(jwxt_id, jwxt_password, config.type);
-    jwxt.getGrades(req.body.method, req.body.validate_code, encryption.decryptText(req.cookies.identity)).then(grades => {
+    jwxt.getGrades(req.body.method, encryption.decryptText(req.cookies.captcha), encryption.decryptText(req.cookies.identity)).then(grades => {
         res.render('grades', {server_url, gpa: grades[1], content: grades[0], type: req.body.method});
     }).catch(err => {
         res.redirect(server_url + '?message=尚未查询到成绩（请确认学号，密码和验证码均输入正确，以及确认验证码是否过期）');

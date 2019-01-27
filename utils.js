@@ -1,7 +1,7 @@
 var fs = require('fs');
 
 function Utils() {
-    this.deleteImgs = function () {
+    this.deleteImgs = function() {
         fs.readdir(__dirname + '/public/vc/', function(err, files) {
             if (err) {
                 console.error(err);
@@ -11,6 +11,7 @@ function Utils() {
             });
         });
     };
+    
 };
 
 module.exports = Utils;
