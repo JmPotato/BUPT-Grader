@@ -42,6 +42,10 @@ app.get('/', function (req, res) {
     else
         var message = '';
     if (req.cookies.user) {
+        if(req.cookies.first)
+            var first = true;
+        else
+            var first = false;
         try {
             var jwxt_id = encryption.decryptText(req.cookies.user.id);
             var jwxt_password = encryption.decryptText(req.cookies.user.password);
@@ -60,6 +64,7 @@ app.get('/', function (req, res) {
         jwxt.getCAPTCHA(validate_code_img).then(result => {
             res.cookie('captcha', encryption.encryptText(result[0]), {maxAge:6000000, path:'/', httpOnly:true});
             res.cookie('identity', encryption.encryptText(result[1]), {maxAge:6000000, path:'/', httpOnly:true});
+            res.clearCookie('first');
             res.render('home', {message, login, server_url});
         }).catch(err => {
             if(err.message === "Wrong Result.") {
@@ -67,7 +72,7 @@ app.get('/', function (req, res) {
                 res.clearCookie('identity');
                 res.redirect(server_url);
                 res.end();
-            } else if(err.message === "Bad Login.") {
+            } else if(err.message === "Bad Login." && first) {
                 res.clearCookie('user');
                 res.clearCookie('captcha');
                 res.clearCookie('identity');
@@ -87,6 +92,7 @@ app.get('/', function (req, res) {
         });
     } else {
         login = 0;
+        res.clearCookie('first');
         res.render('home', {random_id, message, login, server_url});
     }
 });
@@ -103,6 +109,7 @@ app.post('/sign_in', urlencodedParser, function (req, res) {
     if (re_id.test(req.body.id) && req.body.password !== '') {
         try {
             res.cookie('user', {id: encryption.encryptText(req.body.id), password: encryption.encryptText(req.body.password)},{maxAge:2678400000,path:'/',httpOnly:true});
+            res.cookie('first', 'first',{maxAge:2678400000,path:'/',httpOnly:true});
         } catch(err) {
             res.redirect(server_url);
             res.end();
