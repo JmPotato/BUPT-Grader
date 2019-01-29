@@ -9,7 +9,6 @@ var utils = new Utils();
 var encryption = new Encryption(config.key);
 
 var express = require('express');
-var tesseract = require('tesseract.js');
 var bodyParser = require('body-parser');
 var cookieParser = require('cookie-parser');
 
@@ -34,9 +33,10 @@ app.get('/', function (req, res) {
     var login = 0;
     var random_id = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
     var validate_code_img = __dirname + '/public/vc/validate_code_' + random_id + '.jpg';
-    var message = req.param('message');
-    if (req.cookies.identity)
-        res.clearCookie('identity');
+    if(req.param('message'))
+        var message = req.param('message');
+    else
+        var message = '';
     if (req.cookies.user) {
         try {
             var jwxt_id = encryption.decryptText(req.cookies.user.id);
@@ -53,28 +53,19 @@ app.get('/', function (req, res) {
             res.end();
         }
         var jwxt = new Inquire(jwxt_id, jwxt_password, config.type);
-        jwxt.getCAPTCHA(validate_code_img).then(identity => {
-            tesseract.recognize(validate_code_img, {
-                lang: 'eng'
-            }).then(function(result) {
-                res.cookie('identity', encryption.encryptText(identity), {maxAge:6000000, path:'/', httpOnly:true});
-                res.cookie('captcha', encryption.encryptText(identity), {maxAge:6000000, path:'/', httpOnly:true});
-                res.render('home', {message, login, server_url});
-            }).catch(err => {
-                res.clearCookie('user');
-                res.clearCookie('identity');
-                res.redirect(server_url + '?message=访问教务系统错误，请重试');
-                res.end();
-            });
+        jwxt.getCAPTCHA(validate_code_img).then(result => {
+            res.cookie('captcha', encryption.encryptText(result[0]), {maxAge:6000000, path:'/', httpOnly:true});
+            res.cookie('identity', encryption.encryptText(result[1]), {maxAge:6000000, path:'/', httpOnly:true});
+            res.render('home', {message, login, server_url});
         }).catch(err => {
-            if(err.message === "Wrong Answer.") {
+            if(err.message === "Wrong Result.") {
                 res.clearCookie('identity');
-                res.redirect(server_url);
+                res.redirect(server_url + '?message=' + message);
                 res.end();
             } else {
                 res.clearCookie('user');
                 res.clearCookie('identity');
-                res.redirect(server_url + '?message=访问教务系统错误，请重试');
+                res.redirect(server_url + '?message=请确认学号、密码均输入正确后重试');
                 res.end();
             }
         });
@@ -109,7 +100,6 @@ app.post('/sign_in', urlencodedParser, function (req, res) {
 });
 
 app.get('/sign_out', function (req, res) {
-    utils.deleteImgs();
     res.clearCookie('user');
     res.clearCookie('identity');
     res.redirect(server_url);
@@ -126,21 +116,23 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
     try {
         var jwxt_id = encryption.decryptText(req.cookies.user.id);
         var jwxt_password = encryption.decryptText(req.cookies.user.password);
+        var identity = encryption.decryptText(req.cookies.identity);
+        var captcha = encryption.decryptText(req.cookies.captcha);
     } catch(err) {
         res.redirect(server_url + '/sign_out');
         res.end();
     }
     var jwxt = new Inquire(jwxt_id, jwxt_password, config.type);
-    jwxt.getGrades(req.body.method, encryption.decryptText(req.cookies.captcha), encryption.decryptText(req.cookies.identity)).then(grades => {
+    jwxt.getGrades(req.body.method, captcha, identity).then(grades => {
         res.render('grades', {server_url, gpa: grades[1], content: grades[0], type: req.body.method});
     }).catch(err => {
-        res.redirect(server_url + '?message=尚未查询到成绩（请确认学号，密码和验证码均输入正确，以及确认验证码是否过期）');
+        res.redirect(server_url + '?message=尚未查询到成绩（请确认学号、密码均输入正确后重试）');
         res.end();
     });
 });
 
 app.get('/logout.do', function (req, res) {
-    res.redirect(server_url + '?message=尚未查询到成绩（请确认学号，密码和验证码均输入正确，以及确认验证码是否过期）');
+    res.redirect(server_url + '?message=尚未查询到成绩（请确认学号、密码均输入正确后重试）');
     res.end();
 });
 

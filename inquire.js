@@ -2,6 +2,7 @@ var config = require('./config.js');
 var Calculator = require('./calculator.js');
 
 var fs = require('fs');
+var cheerio = require("cheerio");
 var iconv = require('iconv-lite');
 var request = require('request');
 var tesseract = require('tesseract.js');
@@ -52,11 +53,11 @@ function Inquire(jwxt_id, jwxt_password, type) {
                                     return;
                                 }
                                 var identity = ticket_1 + '; ' + ticket_2 + "; PAN_GP_CK_VER=2; PAN_GP_CACHE_LOCAL_VER_ON_SERVER=0; GP_CLIENT_CK_UPDATES=; PAN_GP_CK_VER_ON_CLIENT=2";
-                                var jwxt = that.checkCAPTCHA(validate_code_img, identity);
-                                jwxt.then(function() {
-                                    resolve(identity);
+                                that.checkCAPTCHA(validate_code_img, identity).then(function(ocr) {
+                                    resolve([ocr, identity]);
+                                    return;
                                 }).catch(err => {
-                                    reject(new Error("Wrong Answer."));
+                                    reject(err);
                                 });
                             }).pipe(fs.createWriteStream(validate_code_img));
                         });
@@ -71,11 +72,11 @@ function Inquire(jwxt_id, jwxt_password, type) {
                         return;
                     }
                     var identity = ticket_1;
-                    var jwxt = that.checkCAPTCHA(validate_code_img, identity);
-                    jwxt.then(function() {
-                        resolve(identity);
+                    that.checkCAPTCHA(validate_code_img, identity).then(function(ocr) {
+                        resolve([ocr, identity]);
+                        return;
                     }).catch(err => {
-                        reject(new Error("Wrong Answer."));
+                        reject(err);
                     });
                 }).pipe(fs.createWriteStream(validate_code_img));
             }
@@ -90,13 +91,15 @@ function Inquire(jwxt_id, jwxt_password, type) {
                 var ocr = result.text.replace(/\s+/g,"");
                 var correction = /^[a-zA-Z0-9]{4}$/;
                 if(!correction.test(ocr)) {
-                    reject(new Error("Wrong OCR Result."));
+                    reject(new Error("Wrong Result."));
+                    return;
                 } else {
                     var jwxt = new Inquire(jwxt_id, jwxt_password, config.type);
                     jwxt.getGrades('all', ocr, identity).then(grades => {
-                        resolve();
+                        resolve(ocr);
                     }).catch(err => {
-                        reject(new Error("Wrong OCR Result."));
+                        reject(err);
+                        return;
                     });
                 }
             }).catch(err => {
@@ -137,18 +140,24 @@ function Inquire(jwxt_id, jwxt_password, type) {
                 v_yzm: validate_code,
             };
             request.post({url: jwxt_url + '/jwLoginAction.do', encoding: null, gzip: true, headers: post_headers, form: form}, function (error, response, body) {
-                if (method === 'all') {
+                var $ = cheerio.load(iconv.decode(body, 'gb2312'));
+                if($("title").text() === "URP 综合教务系统 - 登录") {
+                    reject(new Error("Bad Login."));
+                    return;
+                } else if (method === 'all') {
                     request.get({url: jwxt_url + '/gradeLnAllAction.do?type=ln&oper=sxinfo&lnsxdm=001', encoding: null, gzip: true, headers: get_headers}, function (error, r, body) {
                         try {
                             grades = iconv.decode(body, 'gb2312');
                         } catch(err) {
-                            reject(new Error("Faild to get the grades."));
+                            reject(new Error("Wrong Result."));
+                            return;
                         }
                         var calculator = new Calculator(grades, 'all');
                         var content = calculator.purifyTable();
                         var gpa = calculator.calculateGPA();
                         if (!Boolean(content.text())) {
-                            reject(new Error("Faild to get the grades."));
+                            reject(new Error("Wrong Result."));
+                            return;
                         }
                         resolve([content, gpa.toFixed(4)]);
                     });
@@ -157,13 +166,15 @@ function Inquire(jwxt_id, jwxt_password, type) {
                         try {
                             grades = iconv.decode(body, 'gb2312');
                         } catch(err) {
-                            reject(new Error("Faild to get the grades."));
+                            reject(new Error("Wrong Result."));
+                            return;
                         }
                         var calculator = new Calculator(grades, 'current');
                         var content = calculator.purifyTable();
                         var gpa = calculator.calculateGPA();
                         if (!Boolean(content.text())) {
-                            reject(new Error("Faild to get the grades."));
+                            reject(new Error("Wrong Result."));
+                            return;
                         }
                         resolve([content, gpa.toFixed(4)]);
                     });
