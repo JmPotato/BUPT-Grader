@@ -142,8 +142,13 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
     jwxt.getGrades(req.body.method, captcha, identity).then(grades => {
         res.render('grades', {server_url, gpa: grades[1], content: grades[0], type: req.body.method});
     }).catch(err => {
-        res.redirect(server_url + '?message=尚未查询到成绩（请确认学号、密码均输入正确后重试）');
-        res.end();
+        if(err.message === "Expired Login.") {
+            res.redirect(server_url + '?message=登陆信息过期，请重新查询');
+            res.end();
+        } else {
+            res.redirect(server_url + '?message=尚未查询到成绩（请确认学号、密码均输入正确后重试）');
+            res.end();
+        }
     });
 });
 
