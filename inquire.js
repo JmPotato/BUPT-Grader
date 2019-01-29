@@ -76,6 +76,7 @@ function Inquire(jwxt_id, jwxt_password, type) {
                         resolve([ocr, identity]);
                         return;
                     }).catch(err => {
+                        console.log(err);
                         reject(err);
                     });
                 }).pipe(fs.createWriteStream(validate_code_img));
@@ -143,7 +144,7 @@ function Inquire(jwxt_id, jwxt_password, type) {
                 try {
                     var title = cheerio.load(iconv.decode(body, 'gb2312'));
                 } catch(err) {
-                    reject(new Error("Bad Login."));
+                    reject(new Error("Expired Login."));
                     return;
                 }
                 if(title("title").text() === "URP 综合教务系统 - 登录") {
