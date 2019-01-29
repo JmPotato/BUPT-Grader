@@ -76,7 +76,6 @@ function Inquire(jwxt_id, jwxt_password, type) {
                         resolve([ocr, identity]);
                         return;
                     }).catch(err => {
-                        console.log(err);
                         reject(err);
                     });
                 }).pipe(fs.createWriteStream(validate_code_img));
