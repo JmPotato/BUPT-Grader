@@ -33,6 +33,10 @@ app.get('/', function (req, res) {
     var login = 0;
     var random_id = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, 5);
     var validate_code_img = __dirname + '/public/vc/validate_code_' + random_id + '.jpg';
+    if(req.cookies.captcha)
+        res.clearCookie('captcha');
+    if(req.cookies.identity)
+        res.clearCookie('identity');
     if(req.param('message'))
         var message = req.param('message');
     else
@@ -49,7 +53,7 @@ app.get('/', function (req, res) {
         if((!config.net_user || !config.net_password) && config.type === 0) {
             res.clearCookie('user');
             res.clearCookie('identity');
-            res.redirect(server_url + '?message=访问教务系统错误，请重试');
+            res.redirect(server_url + '?message=服务器配置错误');
             res.end();
         }
         var jwxt = new Inquire(jwxt_id, jwxt_password, config.type);
@@ -59,13 +63,25 @@ app.get('/', function (req, res) {
             res.render('home', {message, login, server_url});
         }).catch(err => {
             if(err.message === "Wrong Result.") {
+                res.clearCookie('captcha');
+                res.clearCookie('identity');
+                res.redirect(server_url);
+                res.end();
+            } else if(err.message === "Bad Login.") {
+                res.clearCookie('user');
+                res.clearCookie('captcha');
+                res.clearCookie('identity');
+                res.redirect(server_url + '?message=学号或密码错误');
+                res.end();
+            } else if(err.message === "Faild to access Jwxt.") {
+                res.clearCookie('user');
+                res.clearCookie('captcha');
+                res.clearCookie('identity');
+                res.redirect(server_url + '?message=教务系统访问错误');
+            } else {
+                res.clearCookie('captcha');
                 res.clearCookie('identity');
                 res.redirect(server_url + '?message=' + message);
-                res.end();
-            } else {
-                res.clearCookie('user');
-                res.clearCookie('identity');
-                res.redirect(server_url + '?message=请确认学号、密码均输入正确后重试');
                 res.end();
             }
         });
@@ -129,11 +145,6 @@ app.post('/get_grades', urlencodedParser, function (req, res) {
         res.redirect(server_url + '?message=尚未查询到成绩（请确认学号、密码均输入正确后重试）');
         res.end();
     });
-});
-
-app.get('/logout.do', function (req, res) {
-    res.redirect(server_url + '?message=尚未查询到成绩（请确认学号、密码均输入正确后重试）');
-    res.end();
 });
 
 var server = app.listen(server_port, function () {

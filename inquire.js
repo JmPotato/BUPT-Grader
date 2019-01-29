@@ -42,14 +42,14 @@ function Inquire(jwxt_id, jwxt_password, type) {
                             try {
                                 var ticket_2 = response.headers["set-cookie"].toString().substring(0,46);
                             } catch(err) {
-                                reject(new Error("Faild to login Jwxt."));
+                                reject(new Error("Faild to access Jwxt."));
                                 return;
                             }
                             request.get({url: 'https://vpn.bupt.edu.cn/http/jwxt.bupt.edu.cn/validateCodeAction.do?gp-1&random=', encoding: null, headers: {'Cookie': ticket_1 + '; ' + ticket_2}}, function (error, response, body) {
                                 try {
                                     var ticket_3 = response.headers["set-cookie"].toString().substring(0,46);
                                 } catch(err) {
-                                    reject(new Error("Faild to get the CAPTCHA."));
+                                    reject(new Error("Faild to access Jwxt."));
                                     return;
                                 }
                                 var identity = ticket_1 + '; ' + ticket_2 + "; PAN_GP_CK_VER=2; PAN_GP_CACHE_LOCAL_VER_ON_SERVER=0; GP_CLIENT_CK_UPDATES=; PAN_GP_CK_VER_ON_CLIENT=2";
@@ -68,7 +68,7 @@ function Inquire(jwxt_id, jwxt_password, type) {
                     try {
                         var ticket_1 = response.headers["set-cookie"].toString();
                     } catch(err) {
-                        reject(new Error("Faild to get the CAPTCHA."));
+                        reject(new Error("Faild to access Jwxt."));
                         return;
                     }
                     var identity = ticket_1;
@@ -140,8 +140,13 @@ function Inquire(jwxt_id, jwxt_password, type) {
                 v_yzm: validate_code,
             };
             request.post({url: jwxt_url + '/jwLoginAction.do', encoding: null, gzip: true, headers: post_headers, form: form}, function (error, response, body) {
-                var $ = cheerio.load(iconv.decode(body, 'gb2312'));
-                if($("title").text() === "URP 综合教务系统 - 登录") {
+                try {
+                    var title = cheerio.load(iconv.decode(body, 'gb2312'));
+                } catch(err) {
+                    reject(new Error("Bad Login."));
+                    return;
+                }
+                if(title("title").text() === "URP 综合教务系统 - 登录") {
                     reject(new Error("Bad Login."));
                     return;
                 } else if (method === 'all') {
