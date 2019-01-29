@@ -103,7 +103,7 @@ function Inquire(jwxt_id, jwxt_password, type) {
                     });
                 }
             }).catch(err => {
-                reject(new Error("Failed to OCR."));
+                reject(new Error("Wrong Result."));
             });
         });
         return promise;
