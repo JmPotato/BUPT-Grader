@@ -97,3 +97,5 @@ typings/
 
 # next.js build output
 .next
+config.js
+public/vc/README.md
