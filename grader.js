@@ -1,19 +1,19 @@
-var config = require('./config.js');
-var Utils = require('./utils.js');
-var Inquire = require('./inquire.js');
-var Encryption = require('./encryption.js');
+const config = require('./config.js');
+const Utils = require('./utils.js');
+const Inquire = require('./inquire.js');
+const Encryption = require('./encryption.js');
 
-var server_url = config.server_url;
-var server_port = config.server_port;
-var utils = new Utils();
-var encryption = new Encryption(config.key);
+const server_url = config.server_url;
+const server_port = config.server_port;
+const utils = new Utils();
+const encryption = new Encryption(config.key);
 
-var express = require('express');
-var bodyParser = require('body-parser');
-var cookieParser = require('cookie-parser');
+const express = require('express');
+const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 
-var urlencodedParser = bodyParser.urlencoded({ extended: false })
-var app = express();
+const urlencodedParser = bodyParser.urlencoded({ extended: false })
+const app = express();
 
 app.use(express.static(__dirname + '/public'));
 app.use(cookieParser());

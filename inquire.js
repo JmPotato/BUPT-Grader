@@ -1,11 +1,11 @@
-var config = require('./config.js');
-var Calculator = require('./calculator.js');
+const config = require('./config.js');
+const Calculator = require('./calculator.js');
 
-var fs = require('fs');
-var cheerio = require("cheerio");
-var iconv = require('iconv-lite');
-var request = require('request');
-var tesseract = require('tesseract.js');
+const fs = require('fs');
+const cheerio = require("cheerio");
+const iconv = require('iconv-lite');
+const request = require('request');
+const tesseract = require('tesseract.js');
 
 function Inquire(jwxt_id, jwxt_password, type) {
     var that = this;
@@ -64,7 +64,7 @@ function Inquire(jwxt_id, jwxt_password, type) {
                     });
                 });
             } else if(type === 1) {
-                request.get({url: 'https://jwxt.bupt.edu.cn/validateCodeAction.do?gp-1&random=', encoding: null}, function (error, response, body) {
+                request.get({url: 'https://jwxt.bupt.edu.cn/validateCodeAction.do?random=', encoding: null}, function (error, response, body) {
                     try {
                         var ticket_1 = response.headers["set-cookie"].toString();
                     } catch(err) {
